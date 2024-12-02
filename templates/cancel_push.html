@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Cancel Push</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-body">
+    <nav class="top-nav">
+        <h1>Cancel Changes to Push</h1>
+        <div class="nav-links">
+            
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="state">
+            <h4>This will clear all changes you have staged to push.</h4>
+            <div class="button-container">
+                <a href="{{ url_for('confirm_cancel_push') }}" class="button">Confirm Cancel</a>
+                <a href="{{ url_for('push_changes') }}" class="button">Back to Push</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

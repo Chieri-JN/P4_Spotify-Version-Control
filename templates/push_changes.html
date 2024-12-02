@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Push Changes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-body">
+    <nav class="top-nav">
+        <h1>Push Changes</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('cancel_push') }}" class="button">Back to Playlists</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="state">
+            <h3>Changes to Push</h3>
+            {% if changes.type == 'restore' %}
+                <h4>Restore playlist "{{ changes.name }}" to previous state</h4>
+                <p>This will:</p>
+                <ul>
+                    <li>Update playlist to {{ changes.tracks|length }} tracks</li>
+                    <li>Create a new state to record this change</li>
+                </ul>
+            {% elif changes.type == 'clone' %}
+                <h4>Create new playlist "{{ changes.name }}"</h4>
+                <p>This will:</p>
+                <ul>
+                    <li>Create a new playlist with {{ changes.tracks|length }} tracks</li>
+                    <li>Add it to your Spotify account</li>
+                </ul>
+            {% endif %}
+            <div class="button-container">
+                <a href="{{ url_for('confirm_push_changes') }}" class="button">Push Changes</a>
+                <a href="{{ url_for('cancel_push') }}" class="button">Cancel</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

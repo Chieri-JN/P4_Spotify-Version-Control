@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Your Playlists</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-body">
+    <nav class="top-nav">
+        <h1>Your Playlists</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}" class="button">Back to Home</a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="playlists-grid">
+            {% if playlists %}
+                {% for playlist in playlists %}
+                {% if playlist.tracks %}
+                    <div class="playlist-card">
+                        {% if playlist.images and playlist.images[0] %}
+                            <img src="{{ playlist.images[0].url }}" alt="{{ playlist.name }} cover">
+                        {% endif %}
+                        <h2>{{ playlist.name }}</h2>
+                        
+                            <p>{{ playlist.tracks.total }} tracks</p>
+                            <a href="{{ url_for('playlist_history', playlist_id=playlist.id) }}" class="button">View History</a>
+                    </div>
+                {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="no-playlists">No playlists found.</p>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,4 @@
+mysecrets.txt
+.env
+# Database
+spotify_version_control.db

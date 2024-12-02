@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ playlist_name }} - History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-body">
+    <nav class="top-nav">
+        <div class="nav-title">
+            
+            <h2 class="subtitle">{{ playlist_name }} version history</h2>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('playlists') }}" class="button">Back to Playlists</a>
+            <a href="{{ url_for('home') }}" class="button">Home</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% if states %}
+            {% for state in states %}
+                <div class="state-container">
+                    <div class="state">
+                        <h3>{{ state.timestamp }} - {{ state.tracks|length }} songs</h3>
+                        <ul>
+                            {% for track in state.tracks %}                    
+                                <span class="song-title">{{ track.title }},</span>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="state-buttons">
+                        <a href="{{ url_for('restore_state', state_id=state.id, playlist_id=playlist_id) }}" class="button">Restore to This Version</a>
+                        <a href="{{ url_for('clone_state', state_id=state.id, playlist_id=playlist_id) }}" class="button">Create New Playlist</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-states">
+                <h2>No history found for this playlist</h2>
+                <p>Changes to this playlist will be tracked and shown here.</p>
+            </div>
+        {% endif %}
+    </main>
+</body>
+</html>

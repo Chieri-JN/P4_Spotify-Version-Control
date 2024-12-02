@@ -1,0 +1,416 @@
+body {
+    font-family: 'Helvetica', sans-serif;
+    background-color: #191414;  /* Spotify's dark background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.container {
+    text-align: center;
+    padding: 2rem;
+    background-color: #282828;  /* Spotify's card background */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: white;
+    margin-bottom: 1.5rem;
+}
+h2 {
+    color: white;
+    margin-bottom: 4.5rem;
+    text-align: center;
+    font-size: 4rem;
+}
+
+.login-btn {
+    display: inline-block;
+    background-color: #1DB954;  /* Spotify green */
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #54df84;
+    color: rgb(0, 59, 0);
+    filter: drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.5));
+}   
+
+.button {
+    display: inline-block;
+    background-color: #1DB954;  /* Spotify green */
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #54df84;
+    color: rgb(0, 59, 0);
+}
+
+
+.button-container {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    margin-top: 2rem;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+
+
+.home-container {
+
+    text-align: center;
+    padding: 3rem;
+    background-color: #282828;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 90%;
+}
+
+.home-btn {
+    display: inline-block;
+    background-color: #1DB954;
+    color: white;
+    padding: 15px 30px;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.home-btn:hover {
+    background-color: #54df84;
+    color: rgb(0, 59, 0);
+    transform: translateY(-2px);
+    filter: drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.5));
+}
+
+.page-body {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+}
+
+.top-nav {
+    background-color: #282828;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nav-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.playlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.playlist-card {
+    background-color: #282828;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.playlist-card:hover {
+    transform: translateY(-5px);
+}
+
+.playlist-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.playlist-card h2 {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+.playlist-card p {
+    color: #b3b3b3;
+    margin-bottom: 1rem;
+}
+
+.no-playlists {
+    text-align: center;
+    color: #b3b3b3;
+    grid-column: 1 / -1;
+    padding: 2rem;
+}
+
+.state {
+    background-color: #282828;
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 2rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.state h3 {
+    color: #1DB954;  /* Spotify green */
+    margin-bottom: 1rem;
+    font-size: 1.6rem;
+    /* text-align: center; */
+}
+
+.state h4 {
+    color: #1DB954;  /* Spotify green */
+    margin-bottom: 1rem;
+    font-size: 1.7rem;
+    text-align: center;
+}
+
+
+.state ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.state li {
+    color: #ffffff;
+    padding: 0.8rem;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.state li:last-child {
+    border-bottom: none;
+}
+
+.state li:hover {
+    background-color: #333333;
+}
+
+.state .song-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.state .song-title {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.state .song-artist {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+
+/* Playlist History Specific Styles */
+.state-container {
+    background-color: #282828;
+    border-radius: 8px;
+    margin: 2rem 0;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.state {
+    padding: 2rem;
+}
+
+.state h3 {
+    color: #1DB954;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    border-bottom: 1px solid #404040;
+    padding-bottom: 0.5rem;
+}
+
+.state ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.state li {
+    padding: 1rem;
+    border-bottom: 1px solid #333333;
+    transition: background-color 0.2s ease;
+}
+
+.state li:last-child {
+    border-bottom: none;
+}
+
+.state li:hover {
+    background-color: #333333;
+}
+
+.song-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffffff;
+}
+
+.song-title {
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'Monaco', sans-serif;
+}
+
+.song-artist {
+    color: #009202;
+    font-size: 0.9rem;
+}
+
+.state-buttons {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    background-color: #333333;
+    justify-content: flex-end;
+}
+
+.state-buttons .button {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+}
+
+.no-states {
+    text-align: center;
+    color: #b3b3b3;
+    padding: 3rem;
+    background-color: #282828;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .state-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .song-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+}
+
+/* Pull Changes Styles */
+.changes-summary {
+    background-color: #282828;
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.change-section {
+    margin: 2rem 0;
+    padding: 1rem;
+    background-color: #333333;
+    border-radius: 4px;
+}
+
+.change-section h3 {
+    color: #1DB954;
+    margin-bottom: 1rem;
+}
+
+.playlist-changes {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: #282828;
+    border-radius: 4px;
+}
+
+.track-changes {
+    margin: 1rem 0;
+}
+
+.track-changes.added h5 {
+    color: #1DB954;
+}
+
+.track-changes.removed h5 {
+    color: #ff4444;
+}
+
+.track-changes ul {
+    list-style: none;
+    padding: 0;
+}
+
+.track-changes li {
+    padding: 0.5rem;
+    color: #ffffff;
+    border-bottom: 1px solid #404040;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.button.confirm {
+    background-color: #1DB954;
+}
+
+.button.cancel {
+    background-color: #ff4444;
+}
+
+.no-changes {
+    text-align: center;
+    padding: 3rem;
+    background-color: #282828;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.no-changes h2 {
+    color: #1DB954;
+    margin-bottom: 1rem;
+}
+
+.no-changes p {
+    color: #b3b3b3;
+    margin-bottom: 2rem;
+}
+

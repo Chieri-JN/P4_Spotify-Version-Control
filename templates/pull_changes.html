@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pull Changes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-body">
+    <nav class="top-nav">
+        <h1>Pull Changes</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('playlists') }}" class="button">Go to Playlists</a>
+            <a href="{{ url_for('home') }}" class="button">Home</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="state">
+            <h3>Confirm Pull Changes</h3>
+            
+            {% if changes.new_playlists %}
+            <h4>New Playlists:</h4>
+            <ul>
+                {% for playlist in changes.new_playlists %}
+                <li>{{ playlist.name }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if changes.deleted_playlists %}
+            <h4>Deleted Playlists:</h4>
+            <ul>
+                {% for playlist in changes.deleted_playlists %}
+                <li>{{ playlist.name }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if changes.modified_playlists %}
+            <h4>Modified Playlists:</h4>
+            <ul>
+                {% for change in changes.modified_playlists %}
+                <li>
+                    {{ change.playlist.name }}:
+                    {% if change.added_tracks %}
+                    <div>Added: {{ change.added_tracks|length }} tracks</div>
+                    {% endif %}
+                    {% if change.removed_tracks %}
+                    <div>Removed: {{ change.removed_tracks|length }} tracks</div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <div class="button-container">
+                <a href="{{ url_for('confirm_pull_changes') }}" class="button">Confirm Changes</a>
+                <a href="{{ url_for('home') }}" class="button">Cancel</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

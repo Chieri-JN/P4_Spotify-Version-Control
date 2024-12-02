@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="home-container">
+    
+    <h2>Welcome to your playlist manager</h2>
+    
+        <div class="button-container">
+            <div>
+                <a href="{{ url_for('playlists') }}" class="button">View Playlists</a>   
+            </div>
+            <div>
+                <a href="{{ url_for('pull_changes') }}" class="button">Pull Changes</a>
+            </div>
+            <div>
+                <a href="{{ url_for('login') }}" class="button">Login</a>
+            </div>
+        </div>
+        <!-- have buttons for view playlists and create playlist -->
+</body
+</html>
