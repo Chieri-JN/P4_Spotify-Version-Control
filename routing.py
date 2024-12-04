@@ -9,8 +9,10 @@ from models.userModel import *
 from models.playlistModel import *
 from models.songModel import *
 from models.stateModel import *
+from models.stageModel import StagedChange
 from typing import *
-from database import init_db, save_user, get_user
+from database import init_db, save_user, get_user, save_staged_change, get_staged_change, clear_staged_change
+import uuid
 
 # Initialize the database when the app starts
 init_db()
@@ -178,7 +180,10 @@ def playlist_history(playlist_id):
     for state in states:
         timestamp = datetime.fromisoformat(state.data)
         state.timestamp = timestamp.strftime("%B %d, %Y at %I:%M %p")
-
+    # print("THESE ARE THE STATES", states)
+    # for state in states:
+    #     state.display_info()
+    # print("THIS A SANITY CHECK")\make_new_statez
     return render_template('playlist_history.html', 
                          states=states,
                          playlist_name=playlist.name,
@@ -219,6 +224,14 @@ def pull_changes():
 
 @app.route("/confirm_pull_changes")
 def confirm_pull_changes():
+    if 'access_token' not in session:
+        return redirect('/login')
+    
+    if datetime.now().timestamp() > session['expires_at']:
+        print("token expired, REFRESHING....")
+        return redirect('/refresh_token')
+    
+
     if 'pending_changes' not in session:
         return redirect('/playlists')
     
@@ -263,7 +276,7 @@ def restore_state(state_id, playlist_id):
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
-
+    
     # Get user and playlist data
     user = get_user(session['user_id'])
     playlist = user.playlist_objects.get(playlist_id)
@@ -279,15 +292,22 @@ def restore_state(state_id, playlist_id):
         print(f"State {state_id} not found")
         return redirect(f'/playlist_history/{playlist_id}')
     
-    # Store the staged changes in session
-    session['staged_changes'] = {
-        'type': 'restore',
-        'playlist_id': playlist_id,
-        'state_id': state_id,
-        'tracks': [track.to_dict() for track in state.tracks],
-        'name': state.name,
-        'description': state.description
-    }
+    # Create staged change
+    staged_change = StagedChange(
+        id=str(uuid.uuid4()),
+        type='restore',
+        playlist_id=playlist_id,
+        state_id=state_id,
+        tracks=[track.to_dict() for track in state.tracks],
+        name=state.name,
+        description=state.description
+    )
+    
+    # Save to database
+    save_staged_change(session['user_id'], staged_change)
+    
+    # Store only the type in session
+    session['staged_type'] = 'restore'
     
     return redirect('/push_changes')
 
@@ -301,6 +321,10 @@ def clone_state(state_id, playlist_id):
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
+    
+    if datetime.now().timestamp() > session['expires_at']:
+        print("token expired, REFRESHING....")
+        return redirect('/refresh_token')
     # not implemented
     # clone playlist state to new playlist
     return redirect('/push_changes')
@@ -309,36 +333,41 @@ def clone_state(state_id, playlist_id):
 # ----------------------- /push_changes -------------------------
 @app.route("/push_changes")
 def push_changes():
-    if 'access_token' not in session:
+    if 'access_token' not in session or 'staged_type' not in session:
         return redirect('/login')
     
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
-
-    if 'staged_changes' not in session:
+    
+    # Get staged changes from database
+    staged_change = get_staged_change(session['user_id'])
+    if not staged_change:
+        print("No staged changes found in database")
         return redirect('/playlists')
 
-    changes = session['staged_changes']
-    return render_template('push_changes.html', changes=changes)
+    return render_template('push_changes.html', changes=staged_change.to_dict())
 
 
 # ----------------------- /confirm_push_changes -------------------------
 @app.route("/confirm_push_changes")
 def confirm_push_changes():
-    if 'access_token' not in session or 'staged_changes' not in session:
+    if 'access_token' not in session or 'staged_type' not in session:
         return redirect('/playlists')
     
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
-
-    changes = session['staged_changes']
     
-    if changes['type'] == 'restore':
+    # Get staged changes from database
+    staged_change = get_staged_change(session['user_id'])
+    if not staged_change:
+        return redirect('/playlists')
+    
+    if staged_change.type == 'restore':
         # Get user and playlist
         user = get_user(session['user_id'])
-        playlist = user.playlist_objects.get(changes['playlist_id'])
+        playlist = user.playlist_objects.get(staged_change.playlist_id)
         
         if not playlist:
             print("Playlist not found in database")
@@ -352,7 +381,7 @@ def confirm_push_changes():
             print("Successfully cleared playlist")
             
             # Get track URIs from the state's tracks
-            track_uris = [f"spotify:track:{track['id']}" for track in changes['tracks']]
+            track_uris = [f"spotify:track:{track['id']}" for track in staged_change.tracks]
             print(f"Preparing to add {len(track_uris)} tracks")
             
             # Add tracks back to the Spotify playlist
@@ -361,15 +390,16 @@ def confirm_push_changes():
                 print("Successfully added tracks back to playlist")
             
             # Update local playlist
-            playlist.tracks = [Song.from_dict(track) for track in changes['tracks']]
+            playlist.tracks = [Song.from_dict(track) for track in staged_change.tracks]
             
             # Create new state
             new_state = make_new_state(
+                None,
                 playlist_id=playlist.id,
-                description=changes['description'],
+                description=staged_change.description,
                 id=len(playlist.states),
                 image_url=playlist.image,
-                playlist_name=changes['name'],
+                playlist_name=staged_change.name,
                 tracks=playlist.tracks
             )
             print("Created new state")
@@ -381,9 +411,9 @@ def confirm_push_changes():
             save_user(user)
             print("Saved changes to database")
             
-            # Clear staged changes
-            session.pop('staged_changes', None)
-            print("Cleared staged changes")
+            # Clear staged changes from both session and database
+            session.pop('staged_type', None)
+            clear_staged_change(session['user_id'])
             
             return redirect(url_for('playlists'))
             
@@ -399,13 +429,14 @@ def confirm_push_changes():
 # ----------------------- /cancel_push -------------------------
 @app.route("/cancel_push")
 def cancel_push():
-    if 'staged_changes' not in session:
+    if 'staged_type' not in session:
         return redirect('/playlists')
     return render_template('cancel_push.html')
 
 @app.route("/confirm_cancel_push")
 def confirm_cancel_push():
-    session.pop('staged_changes', None)
+    session.pop('staged_type', None)
+    clear_staged_change(session['user_id'])
     return redirect('/playlists')
 
 
