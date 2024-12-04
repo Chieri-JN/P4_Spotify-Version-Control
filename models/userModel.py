@@ -54,7 +54,6 @@ class User:
         return user
 
     def needs_refresh(self, max_age_minutes=30):
-        """Check if the data is older than max_age_minutes"""
         last_updated = datetime.fromisoformat(self.last_updated)
         age = datetime.now() - last_updated
         return age > timedelta(minutes=max_age_minutes)
@@ -66,8 +65,6 @@ class User:
         if playlist_id in self.playlist_objects:
             del self.playlist_objects[playlist_id]
             
-
-
     def display_info(self):
         print(f"User ID: {self.id}")
         print("Playlists:")
@@ -110,28 +107,9 @@ def make_new_user(token):
         print(f"Error in make_new_user: {str(e)}")
         raise e
 
-# note when getting user playlists might have to loop until
-# there is no next i.e token['next] == none
-# will need to make calls for every playlist
-# but not for every song, as you can specify using fields in get request
 
-# create new user 
-        # make api call to get the following information: 
-            # user's name
-            # users id
-            # user's playlists
-        # make a new user function
-            # that makes above call and hangles the logic below and just returns the user object
-        # name : str
-        # user_id : str
-        # handle playlist conversion logic
-        # i.e gievn string of ids make playlist objects
-        # same with songs conversion logic
-        # playlists : List[Playlist]
-        # user = User(user_id, playlists)
 
 def compare_playlists(current_user, new_user):
-    """Compare two user's playlists and return differences"""
     changes = {
         'new_playlists': [],
         'deleted_playlists': [],
