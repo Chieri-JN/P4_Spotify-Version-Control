@@ -114,7 +114,8 @@ def get_current_user():
 # ----------------------- /home -------------------------
 @app.route("/home")
 def home():
-    return render_template('home.html')
+    user = get_current_user()
+    return render_template('home.html', user=user)
 
 
 # ----------------------- /playlists -------------------------
@@ -135,8 +136,8 @@ def playlists():
         print("Data needs refresh, fetching from Spotify API")
         user = make_new_user(session['access_token'])
         save_user(user)
-    # else:
-    #     print(f"Using cached data from database with {len(user.user_playlists)} playlists")
+    else:
+        print(f"Using cached data from database with {len(user.user_playlists)} playlists")
     
     # Update total_tracks for each playlist
     for playlist in user.user_playlists:

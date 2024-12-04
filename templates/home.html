@@ -7,7 +7,7 @@
 <body>
     <div class="home-container">
     
-    <h2>Welcome to your playlist manager</h2>
+    <h2>Welcome <span class="spotify-green">{{ user.name }}</span> to your playlist manager</h2>
     
         <div class="button-container">
             <div>
@@ -17,9 +17,8 @@
                 <a href="{{ url_for('pull_changes') }}" class="button">Pull Changes</a>
             </div>
             <div>
-                <a href="{{ url_for('login') }}" class="button">Login</a>
+                <a href="{{ url_for('login') }}" class="button">Back to Login</a>
             </div>
         </div>
-        <!-- have buttons for view playlists and create playlist -->
 </body
 </html>

@@ -8,7 +8,6 @@ class Playlist:
         self.id = playlist_id
         self.tracks = playlist_tracks
         self.states = playlist_states
-        # does this need to be set to True by default? Maybe
         self.updated : bool = True
         self.description = playlist_description
         self.image = image  

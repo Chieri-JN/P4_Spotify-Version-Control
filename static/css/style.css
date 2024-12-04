@@ -81,7 +81,7 @@ h2 {
     background-color: #282828;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
+    max-width: 800px;
     width: 90%;
 }
 
@@ -412,5 +412,9 @@ h2 {
 .no-changes p {
     color: #b3b3b3;
     margin-bottom: 2rem;
+}
+
+.spotify-green {
+    color: #1DB954;
 }
 

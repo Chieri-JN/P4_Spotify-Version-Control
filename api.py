@@ -150,7 +150,6 @@ def delete_tracks_from_playlist(token, playlist_id, track_ids):
     return json_result
 
 def clear_playlist(token, playlist_id):
-    """Remove all tracks from a Spotify playlist"""
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
