@@ -9,6 +9,7 @@ class State:
         self.tracks = playlist_tracks
         self.description = playlist_description 
         self.data = state_data # data represemts the date and time when state was created
+        self.timestamp = datetime.fromisoformat(self.data).strftime("%B %d, %Y at %I:%M %p")
     
     def to_dict(self):
         return {

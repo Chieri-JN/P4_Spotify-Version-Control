@@ -169,13 +169,13 @@ def playlist_history(playlist_id):
         print("No user found, creating new user")
         user = make_new_user(session['access_token'])
         save_user(user)
-    elif user.needs_refresh(max_age_minutes=30):  # Use consistent 30-minute refresh
-        print("Getting fresh playlist data")
-        new_user = make_new_user(session['access_token'])
-        # Compare and apply changes to preserve history
-        changes = compare_playlists(user, new_user)
-        user = apply_changes(user, changes)
-        save_user(user)
+    # elif user.needs_refresh(max_age_minutes=30):  # Use consistent 30-minute refresh
+    #     print("Getting fresh playlist data")
+    #     new_user = make_new_user(session['access_token'])
+    #     # Compare and apply changes to preserve history
+    #     changes = compare_playlists(user, new_user)
+    #     user = apply_changes(user, changes)
+    #     save_user(user)
 
     # Get the playlist object
     playlist = user.playlist_objects.get(playlist_id)
@@ -188,9 +188,9 @@ def playlist_history(playlist_id):
     states = playlist.states[::-1]
 
     # Add formatted timestamp to each state for display
-    for state in states:
-        timestamp = datetime.fromisoformat(state.data)
-        state.timestamp = timestamp.strftime("%B %d, %Y at %I:%M %p")
+    # for state in states:
+    #     timestamp = datetime.fromisoformat(state.data)
+    #     state.timestamp = timestamp.strftime("%B %d, %Y at %I:%M %p")
     # print("THESE ARE THE STATES", states)
     # for state in states:
     #     state.display_info()
