@@ -5,7 +5,7 @@ app = Flask(__name__)
 key = "8430320293932802-2-3299492"
 app.secret_key = key
 
-# important things
+# Configuration
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 redirect_uri = "http://localhost:5003/callback"

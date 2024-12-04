@@ -10,6 +10,9 @@ load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 
+# Debugging: Print client_id and client_secret
+# print("Client ID:", client_id)
+# print("Client Secret:", client_secret)
 
 def get_token():
     auth_string = client_id + ":" + client_secret
@@ -44,7 +47,7 @@ def get_user_info(token):
 
 
 def get_user_playlists(token):
-    # set limit = 8 because I have too many playlists
+    # set limit = 10 because I have too many playlists
     url = "https://api.spotify.com/v1/me/playlists?limit=8"
     headers = get_auth_header(token)
     
@@ -54,7 +57,7 @@ def get_user_playlists(token):
         playlists = json_result["items"]
         nextSet = json_result['next']
         
-       # set limit = 8 because I have too many playlists
+       # set limit = 20 because I have too many playlists
         while nextSet and len(playlists) < 8:
             print("getting next set of playlists")
             response = get(nextSet, headers=headers)
@@ -79,8 +82,7 @@ def get_playlist_info(token, playlist_id):
 
 def get_playlist_tracks(token, playlist_id):
     # setting retrieved fields to get the tracks, id, name, href, and album name 
-    fields = "tracks.items(track(id,name,artists.name,album.name)),next"
-    url = f"https://api.spotify.com/v1/playlists/{playlist_id}?market=US&fields={fields}"
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}?market=US&fields=tracks.items(track(id,name,artists.name,album.name)),next"
     headers = get_auth_header(token)
     
     result = get(url, headers=headers)
