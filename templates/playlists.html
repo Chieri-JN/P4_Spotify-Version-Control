@@ -16,17 +16,14 @@
         <div class="playlists-grid">
             {% if playlists %}
                 {% for playlist in playlists %}
-                {% if playlist.tracks %}
                     <div class="playlist-card">
                         {% if playlist.images and playlist.images[0] %}
                             <img src="{{ playlist.images[0].url }}" alt="{{ playlist.name }} cover">
                         {% endif %}
                         <h2>{{ playlist.name }}</h2>
-                        
-                            <p>{{ playlist.tracks.total }} tracks</p>
-                            <a href="{{ url_for('playlist_history', playlist_id=playlist.id) }}" class="button">View History</a>
+                        <p>{{ playlist.total_tracks }} tracks</p>
+                        <a href="{{ url_for('playlist_history', playlist_id=playlist.id) }}" class="button">View History</a>
                     </div>
-                {% endif %}
                 {% endfor %}
             {% else %}
                 <p class="no-playlists">No playlists found.</p>

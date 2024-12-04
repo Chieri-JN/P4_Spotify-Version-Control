@@ -11,7 +11,7 @@ from models.songModel import *
 from models.stateModel import *
 from models.stageModel import StagedChange
 from typing import *
-from database import init_db, save_user, get_user, save_staged_change, get_staged_change, clear_staged_change
+from database import init_db, save_user, get_user, save_staged_change, get_staged_change, clear_staged_change, save_pending_changes, get_pending_changes, clear_pending_changes
 import uuid
 
 # Initialize the database when the app starts
@@ -131,13 +131,24 @@ def playlists():
     user = get_user(session['user_id'])
     
     # Only refresh if data is older than 10 minutes or doesn't exist
-    if user is None or user.needs_refresh(max_age_minutes=260):
+    if user is None:
         print("Data needs refresh, fetching from Spotify API")
         user = make_new_user(session['access_token'])
         save_user(user)
     else:
         print(f"Using cached data from database with {len(user.user_playlists)} playlists")
     
+    # Update total_tracks for each playlist
+    for playlist in user.user_playlists:
+        # Get the corresponding playlist object
+        playlist_obj = user.playlist_objects.get(playlist['id'])
+        if playlist_obj and playlist_obj.states:
+            # Update the total_tracks in the playlist dictionary
+            playlist['total_tracks'] = len(playlist_obj.states[-1].tracks)
+        else:
+            # Fallback if no states exist
+            playlist['total_tracks'] = 0
+
     return render_template('playlists.html', playlists=user.user_playlists)
 
 
@@ -209,8 +220,8 @@ def pull_changes():
     # Compare and get changes
     changes = compare_playlists(current_user, new_user)
     
-    # Store changes in session for confirmation
-    session['pending_changes'] = {
+    # Store changes in database instead of session
+    pending_changes = {
         'new_playlists': [p.to_dict() for p in changes['new_playlists']],
         'deleted_playlists': [p.to_dict() for p in changes['deleted_playlists']],
         'modified_playlists': [{
@@ -219,50 +230,56 @@ def pull_changes():
             'removed_tracks': [t.to_dict() for t in change['removed_tracks']]
         } for change in changes['modified_playlists']]
     }
+    save_pending_changes(session['user_id'], pending_changes)
+    
+    # Only store a flag in session
+    session['has_pending_changes'] = True
     
     return render_template('pull_changes.html', changes=changes)
 
 @app.route("/confirm_pull_changes")
 def confirm_pull_changes():
-    if 'access_token' not in session:
+    if 'access_token' not in session or 'has_pending_changes' not in session:
         return redirect('/login')
     
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
-    
 
-    if 'pending_changes' not in session:
+    # Get pending changes from database
+    pending_changes = get_pending_changes(session['user_id'])
+    if not pending_changes:
         return redirect('/playlists')
     
     # Get current user
     user = get_user(session['user_id'])
     
-    # Reconstruct changes from session data, preserving states
+    # Reconstruct changes from database data
     changes = {
         'new_playlists': [
             Playlist.from_dict(p_dict) 
-            for p_dict in session['pending_changes']['new_playlists']
+            for p_dict in pending_changes['new_playlists']
         ],
         'deleted_playlists': [
             Playlist.from_dict(p_dict)
-            for p_dict in session['pending_changes']['deleted_playlists']
+            for p_dict in pending_changes['deleted_playlists']
         ],
         'modified_playlists': [{
             'playlist': Playlist.from_dict(change['playlist']),
             'added_tracks': [Song.from_dict(t) for t in change['added_tracks']],
             'removed_tracks': [Song.from_dict(t) for t in change['removed_tracks']]
-        } for change in session['pending_changes']['modified_playlists']]
+        } for change in pending_changes['modified_playlists']]
     }
     
-    # Apply changes while preserving states
+    # Apply changes
     updated_user = apply_changes(user, changes)
     
     # Save updated user to database
     save_user(updated_user)
     
-    # Clear pending changes
-    session.pop('pending_changes', None)
+    # Clear pending changes from both session and database
+    session.pop('has_pending_changes', None)
+    clear_pending_changes(session['user_id'])
     
     return redirect('/playlists')
 
@@ -391,7 +408,7 @@ def confirm_push_changes():
             
             # Update local playlist
             playlist.tracks = [Song.from_dict(track) for track in staged_change.tracks]
-            
+            playlist.total_tracks = len(playlist.tracks)
             # Create new state
             new_state = make_new_state(
                 None,
@@ -464,10 +481,27 @@ def refresh_token():
     return redirect(previous_page)
 
 
-@app.route("/playlist/<playlist_name>")
-def playlist(playlist_name):
-    # not implemented
-    return render_template('playlist.html')
+@app.route("/playlist/<playlist_id>")
+def playlist(playlist_id):
+    if 'access_token' not in session:
+        return redirect('/login')
+    
+    if datetime.now().timestamp() > session['expires_at']:
+        print("token expired, REFRESHING....")
+        return redirect('/refresh_token')
+    
+    # Get user from database
+    user = get_user(session['user_id'])
+    
+    # Get the playlist
+    playlist = user.playlist_objects.get(playlist_id)
+    if not playlist:
+        return redirect('/playlists')
+    
+    # Make sure total_tracks is up to date
+    playlist.total_tracks = len(playlist.tracks)
+    
+    return render_template('playlist.html', playlist=playlist)
 
 @app.route("/create_playlist")
 def create_playlist():

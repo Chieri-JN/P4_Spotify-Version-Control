@@ -194,24 +194,24 @@ def apply_changes(user, changes):
     
     # Add new playlists
     for playlist in changes['new_playlists']:
-        print(f"Adding new playlist: {playlist['name']}")
+        print(f"Adding new playlist: {playlist.name}")
         user.add_playlist(playlist)
     
     # Remove deleted playlists
     for playlist in changes['deleted_playlists']:
-        print(f"Removing playlist: {playlist['id']}")
-        user.remove_playlist(playlist['id'])
+        print(f"Removing playlist: {playlist.id}")
+        user.remove_playlist(playlist.id)
     
     # Update modified playlists
     for change in changes['modified_playlists']:
         playlist = change['playlist']
-        print(f"\nProcessing modified playlist: {playlist['name']}")
+        print(f"\nProcessing modified playlist: {playlist.name}")
         
-        if playlist['id'] not in user.playlist_objects:
-            print(f"Warning: Playlist {playlist['id']} not found in user's playlists")
+        if playlist.id not in user.playlist_objects:
+            print(f"Warning: Playlist {playlist.id} not found in user's playlists")
             continue
             
-        current_playlist = user.playlist_objects[playlist['id']]
+        current_playlist = user.playlist_objects[playlist.id]
         
         # Convert all tracks to Song objects if they aren't already
         added_tracks = [Song.from_dict(t) if isinstance(t, dict) else t for t in change['added_tracks']]
@@ -233,7 +233,8 @@ def apply_changes(user, changes):
         
         # Create new state with the updated tracks
         new_state = make_new_state(
-            playlist_id=playlist['id'],
+            None,
+            playlist_id=playlist.id,
             description=f"Updated playlist with {len(added_tracks)} new and {len(removed_tracks)} removed tracks",
             id=len(current_playlist.states),
             image_url=current_playlist.image,
@@ -244,8 +245,9 @@ def apply_changes(user, changes):
         
         # Update playlist
         current_playlist.states.append(new_state)
+        current_playlist.total_tracks = len(updated_tracks)
         current_playlist.tracks = updated_tracks
-        print(f"Updated playlist {playlist['name']} with new state and {len(updated_tracks)} tracks")
+        print(f"Updated playlist {playlist.name} with new state and {len(updated_tracks)} tracks")
         
         # Verify state was added
         print(f"Playlist now has {len(current_playlist.states)} states")

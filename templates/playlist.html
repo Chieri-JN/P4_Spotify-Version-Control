@@ -1,9 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Playlist</title>
+    <title>{{ playlist.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <h1>Playlist</h1>
+<body class="page-body">
+    <nav class="top-nav">
+        <h1>{{ playlist.name }}</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('playlists') }}" class="button">Back to Playlists</a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="playlist-info">
+            {% if playlist.images and playlist.images[0] %}
+                <img src="{{ playlist.images[0].url }}" alt="{{ playlist.name }} cover" class="playlist-cover">
+            {% endif %}
+            
+            <div class="playlist-details">
+                <h2>{{ playlist.name }}</h2>
+                <p>{{ playlist.total_tracks }} tracks</p>
+                
+                {% if playlist.tracks %}
+                    <div class="tracks-list">
+                        {% for track in playlist.tracks %}
+                            <div class="track-item">
+                                <span class="track-name">{{ track.name }}</span>
+                                <span class="track-artist">{{ track.artists[0].name }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No tracks in this playlist.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
 </body>
 </html> 

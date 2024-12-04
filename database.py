@@ -2,6 +2,7 @@ import sqlite3
 from models.userModel import User
 import json
 from models.stageModel import StagedChange
+from typing import Dict
 
 def init_db():
     conn = sqlite3.connect('spotify_version_control.db')
@@ -19,6 +20,14 @@ def init_db():
     # Create staged_changes table
     c.execute('''
         CREATE TABLE IF NOT EXISTS staged_changes (
+            user_id TEXT PRIMARY KEY,
+            change_data TEXT
+        )
+    ''')
+    
+    # Create pending_changes table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS pending_changes (
             user_id TEXT PRIMARY KEY,
             change_data TEXT
         )
@@ -100,6 +109,52 @@ def clear_staged_change(user_id: str) -> None:
     c = conn.cursor()
     
     c.execute('DELETE FROM staged_changes WHERE user_id = ?', (user_id,))
+    
+    conn.commit()
+    conn.close()
+
+def save_pending_changes(user_id: str, changes: Dict) -> None:
+    conn = sqlite3.connect('spotify_version_control.db')
+    c = conn.cursor()
+    
+    # Create pending_changes table if it doesn't exist
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS pending_changes (
+            user_id TEXT PRIMARY KEY,
+            change_data TEXT
+        )
+    ''')
+    
+    # Convert changes to JSON string
+    change_data = json.dumps(changes)
+    
+    # Insert or update pending changes
+    c.execute('''
+        INSERT OR REPLACE INTO pending_changes (user_id, change_data)
+        VALUES (?, ?)
+    ''', (user_id, change_data))
+    
+    conn.commit()
+    conn.close()
+
+def get_pending_changes(user_id: str) -> Dict:
+    conn = sqlite3.connect('spotify_version_control.db')
+    c = conn.cursor()
+    
+    c.execute('SELECT change_data FROM pending_changes WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    
+    conn.close()
+    
+    if result:
+        return json.loads(result[0])
+    return None
+
+def clear_pending_changes(user_id: str) -> None:
+    conn = sqlite3.connect('spotify_version_control.db')
+    c = conn.cursor()
+    
+    c.execute('DELETE FROM pending_changes WHERE user_id = ?', (user_id,))
     
     conn.commit()
     conn.close()
