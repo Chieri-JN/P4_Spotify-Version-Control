@@ -52,9 +52,11 @@ def login():
 # ----------------------- /callback -------------------------
 @app.route("/callback")
 def callback():
+    # we got wrong redirect uri
     if 'error' in request.args:
         return jsonify({"error": request.args['error']})
 
+    # we got code
     if 'code' in request.args:
         code = request.args['code']
         auth_header = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
@@ -70,11 +72,13 @@ def callback():
         response = requests.post(token_url, headers=headers, data=data)
         token_info = response.json()
 
+        # we got access token
         if 'access_token' in token_info:
             session['access_token'] = token_info['access_token']
             session['refresh_token'] = token_info['refresh_token']
             session['expires_at'] = datetime.now().timestamp() + token_info['expires_in']
             return redirect('/check_user')
+        # something went wrong
         else:
             print("Error fetching access token:", token_info)
             return jsonify({"error": "Failed to retrieve access token."})
@@ -86,6 +90,7 @@ def check_user():
     if 'access_token' not in session:
         return redirect('/login')
     
+    # token expired
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
@@ -97,7 +102,7 @@ def check_user():
             print("Using existing user data from database")
             return redirect('/home')
 
-    # Only make new user if necessary
+    # Only make new user if necessary i.e initial login
     print("Creating new user from Spotify API")
     user = make_new_user(session['access_token'])
     session['user_id'] = user.id
