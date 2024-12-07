@@ -20,7 +20,14 @@ Key interactions:
 │ └── css/
 │ └── style.css
 ├── templates/
+│ └── cancel_push.html
+│ └── home.html
 │ └── index.html
+│ └── playlists_history.html
+│ └── playlist.html
+│ └── playlists.html
+│ └── pull_changes.html
+│ └── push_changes.html
 ├── main.py
 ├── models/
 │ ├── playlistModel.py
@@ -30,6 +37,7 @@ Key interactions:
 │ └── stageModel.py
 ├── README.md
 └── requirements.txt
+```
 
 # How to run: 
     1. download the repo
