@@ -1,19 +1,44 @@
-from flask import jsonify, redirect, session, request, render_template, url_for
 from datetime import datetime
 import base64
-import requests
 import urllib.parse
-from app import app, client_id, client_secret, redirect_uri, auth_url, token_url, api_base_url
-from api import *
-from models.userModel import *
-from models.playlistModel import *
-from models.songModel import *
-from models.stateModel import *
-from models.stageModel import StagedChange
-from typing import *
-from database import init_db, save_user, get_user, save_staged_change, get_staged_change, clear_staged_change, save_pending_changes, get_pending_changes, clear_pending_changes
 import uuid
 import time
+
+from flask import (
+    jsonify, 
+    redirect, 
+    session, 
+    request, 
+    render_template, 
+    url_for
+)
+import requests
+
+from app import (
+    app, 
+    client_id, 
+    client_secret, 
+    redirect_uri, 
+    auth_url, 
+    token_url, 
+)
+from api import *  
+from models.stageModel import StagedChange
+from models.userModel import *  
+from models.playlistModel import *  
+from models.songModel import *  
+from models.stateModel import *  
+from database import (
+    init_db,
+    save_user,
+    get_user,
+    save_staged_change,
+    get_staged_change,
+    clear_staged_change,
+    save_pending_changes,
+    get_pending_changes,
+    clear_pending_changes
+)
 
 # Initialize the database when the app starts
 init_db()
@@ -88,6 +113,7 @@ def callback():
 # ----------------------- /check_user -------------------------
 @app.route("/check_user")
 def check_user():
+    # no access token
     if 'access_token' not in session:
         return redirect('/login')
     
@@ -127,9 +153,11 @@ def home():
 # ----------------------- /playlists -------------------------
 @app.route("/playlists")
 def playlists():
+    # no access token or user id
     if 'access_token' not in session or 'user_id' not in session:
         return redirect('/login')
     
+    # token expired
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
@@ -155,6 +183,7 @@ def playlists():
         else:
             # Fallback if no states exist
             playlist['total_tracks'] = 0
+            print(f"No states found for playlist {playlist['name']}")
 
     return render_template('playlists.html', playlists=user.user_playlists)
 
@@ -165,6 +194,7 @@ def playlist_history(playlist_id):
     if 'access_token' not in session:
         return redirect('/login')
     
+    # token expired
     if datetime.now().timestamp() > session['expires_at']:
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
@@ -173,16 +203,8 @@ def playlist_history(playlist_id):
     user = get_user(session['user_id'])
     
     if user is None:
-        print("No user found, creating new user")
-        user = make_new_user(session['access_token'])
-        save_user(user)
-    # elif user.needs_refresh(max_age_minutes=30):  # Use consistent 30-minute refresh
-    #     print("Getting fresh playlist data")
-    #     new_user = make_new_user(session['access_token'])
-    #     # Compare and apply changes to preserve history
-    #     changes = compare_playlists(user, new_user)
-    #     user = apply_changes(user, changes)
-    #     save_user(user)
+       print("No user found, redirecting to login")
+       return redirect('/login')
 
     # Get the playlist object
     playlist = user.playlist_objects.get(playlist_id)
@@ -194,14 +216,9 @@ def playlist_history(playlist_id):
     # Get states and reverse list -> most recent one on top
     states = playlist.states[::-1]
 
-    # Add formatted timestamp to each state for display
-    # for state in states:
-    #     timestamp = datetime.fromisoformat(state.data)
-    #     state.timestamp = timestamp.strftime("%B %d, %Y at %I:%M %p")
     # print("THESE ARE THE STATES", states)
     # for state in states:
     #     state.display_info()
-    # print("THIS A SANITY CHECK")\make_new_statez
     return render_template('playlist_history.html', 
                          states=states,
                          playlist_name=playlist.name,
@@ -227,7 +244,7 @@ def pull_changes():
     # Compare and get changes
     changes = compare_playlists(current_user, new_user)
     
-    # Store changes in database instead of session
+    # Store changes in database instead of session as it may be too large for session cache
     pending_changes = {
         'new_playlists': [p.to_dict() for p in changes['new_playlists']],
         'deleted_playlists': [p.to_dict() for p in changes['deleted_playlists']],
@@ -495,6 +512,9 @@ def confirm_push_changes():
             print(f"Created new playlist with ID: {new_playlist['id']}")
             print(f"Playlist URL: {new_playlist.get('external_urls', {}).get('spotify', 'No URL available')}")
             
+            # wait until playlist is fully created before adding tracks
+            time.sleep(1)
+
             # Add tracks to the new playlist
             if track_uris:
                 try:
@@ -517,17 +537,7 @@ def confirm_push_changes():
             
             # Set playlist image only if playlist creation and track addition were successful
             if staged_change.image_url:
-                # Check if token is expired
-                if datetime.now().timestamp() > session['expires_at']:
-                    print("Token expired, refreshing...")
-                    return redirect('/refresh_token')
-                
-                # Wait a short moment for the playlist to be fully created
-                time.sleep(1)
-                
-                # Try to set the image
-            
-            
+                # Try to set the image            
                 image_success = set_playlist_image(session['access_token'], new_playlist['id'], staged_change.image_url)
                 if not image_success:
                     print("Failed to set playlist image, but continuing with playlist creation")
@@ -551,11 +561,6 @@ def confirm_push_changes():
 
         except Exception as e:
             print(f"Error during playlist clone: {str(e)}")
-            # Add more detailed error logging
-            import traceback
-            print("Full error:", traceback.format_exc())
-            return redirect('/playlists')
-
 
 
     # If we get here, something went wrong
@@ -600,6 +605,7 @@ def refresh_token():
     previous_page = request.referrer or url_for('home')  # if no prev page, go to home
     return redirect(previous_page)
 
+# not used anymore, may be useful in the future
 # ----------------------- /playlist  -------------------------
 @app.route("/playlist/<playlist_id>")
 def playlist(playlist_id):

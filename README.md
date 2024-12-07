@@ -36,7 +36,6 @@ SPOTIFY_CLIENT_SECRET = <your_client_secret_here>
 - Compare different versions of the same playlist
 
 
-
 ## Helpful Links
 - [Spotify Web API](https://developer.spotify.com/documentation/web-api/)
 - [Spotipy](https://spotipy.readthedocs.io/) - Python library for the Spotify Web API

@@ -1,6 +1,8 @@
 from typing import *
 from .songModel import *
 from datetime import datetime
+
+# state model   
 class State:
     def __init__(self, playlist_name : str, playlist_id : str, playlist_tracks : List[Song], playlist_description : str, state_data : str, state_id : int, image_url : str):
         self.name = playlist_name
@@ -12,6 +14,7 @@ class State:
         self.timestamp = datetime.fromisoformat(self.data).strftime("%B %d, %Y at %I:%M %p")
         self.image_url = image_url
     
+    # convert state to dictionary
     def to_dict(self):
         return {
             'name': self.name,
@@ -23,6 +26,7 @@ class State:
             'image_url': self.image_url
         }
 
+    # convert dictionary to state
     @staticmethod
     def from_dict(data):
         tracks = [Song.from_dict(track) for track in data['tracks']]
@@ -37,14 +41,16 @@ class State:
             image_url
         )
     
+    # debugging info
     def display_info(self):
         print(f"State ID: {self.id}")
         print(f"name: {self.name}")
         print(f"Playlist Description: {self.description}")
         print(f"State Data: {self.data}")
         print("Songs:")
-        
-        
-        
+        for song in self.tracks:
+            song.display_info()
+
+# create new state  
 def make_new_state(token, playlist_id, description, id, image_url, playlist_name, tracks):
     return State(playlist_name, playlist_id, tracks, description, datetime.now().isoformat(), id, image_url)

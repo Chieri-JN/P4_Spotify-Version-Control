@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 from datetime import datetime
 
+# staged change model
 class StagedChange:
     def __init__(self,  id: str, type: str, playlist_id: str, state_id: str, tracks: List[Dict], name: str, description: str, image_url: str = None, timestamp: str = None):
         self.id = id
@@ -12,6 +13,8 @@ class StagedChange:
         self.description = description
         self.timestamp = timestamp or datetime.now().isoformat()
         self.image_url = image_url
+
+    # convert staged change to dictionary
     def to_dict(self) -> Dict[str, Any]:
         return {
             'id': self.id,
@@ -25,6 +28,7 @@ class StagedChange:
             'image_url' : self.image_url
         }
 
+    # convert dictionary to staged change object
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'StagedChange':
         # if not given image

@@ -1,11 +1,13 @@
 from typing import List, Dict
+from collections import defaultdict
+from datetime import datetime, timedelta
+
 from .playlistModel import *
 from .songModel import *
 from .stateModel import *
 from api import *
-from collections import defaultdict
-from datetime import datetime, timedelta
 
+# user model
 class User:
     def __init__(self, user_name:str, user_id: str, user_playlists, playlist_objects):
         self.name = user_name
@@ -13,7 +15,6 @@ class User:
         self.user_playlists = user_playlists
         self.playlist_objects = defaultdict(Playlist)
         
-        # Fix the playlist objects initialization
         if isinstance(playlist_objects, dict):
             # If playlist_objects is already a dictionary
             for pid, p in playlist_objects.items():
@@ -27,6 +28,7 @@ class User:
                     
         self.last_updated = datetime.now().isoformat()
 
+    # convert user to dictionary
     def to_dict(self):
         return {
             'name': self.name,
@@ -36,6 +38,7 @@ class User:
             'last_updated': self.last_updated
         }
 
+    # convert dictionary to user object
     @staticmethod
     def from_dict(data):
         # Create a dictionary of playlist objects
@@ -48,7 +51,7 @@ class User:
             data.get('name', ''),
             data.get('id', ''),
             data.get('user_playlists', []),
-            playlist_objects  # Pass the dictionary directly
+            playlist_objects  
         )
         user.last_updated = data.get('last_updated', datetime.now().isoformat())
         return user
@@ -109,6 +112,7 @@ def make_new_user(token):
 
 
 
+# function to compare the current save user state with the one pulled from spotify
 def compare_playlists(current_user, new_user):
     changes = {
         'new_playlists': [],
@@ -167,8 +171,8 @@ def compare_playlists(current_user, new_user):
     
     return changes
 
+# function to apply changes to the given user
 def apply_changes(user, changes):
-    """Apply the detected changes to the user's playlists"""
     print("\n=== Applying Changes ===")
     
     # Add new playlists
@@ -243,7 +247,7 @@ def apply_changes(user, changes):
     valid_playlist_ids = set(user.playlist_objects.keys())
     user.user_playlists = [p for p in user.user_playlists if p['id'] in valid_playlist_ids]
     
-    # Add debug prints at the end
+    # for debugging
     print("\n=== Final User State ===")
     print(f"Total playlists in user_playlists: {len(user.user_playlists)}")
     print(f"Total playlists in playlist_objects: {len(user.playlist_objects)}")

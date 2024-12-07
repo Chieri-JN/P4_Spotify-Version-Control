@@ -2,6 +2,8 @@ from typing import *
 from .songModel import *
 from .stateModel import *
 from api import *
+
+# playlist model
 class Playlist:
     def __init__(self, playlist_name : str, playlist_id : str, playlist_tracks : List[Song], playlist_states : List[State], playlist_description : str, image):
         self.name = playlist_name
@@ -13,6 +15,7 @@ class Playlist:
         self.image = image  
         self.total_tracks = len(self.tracks)
     
+    # convert playlist to dictionary
     def to_dict(self):
         tl = []
         for track in self.tracks:
@@ -32,6 +35,7 @@ class Playlist:
             'total_tracks': self.total_tracks
         }
 
+    # convert dictionary to playlist
     @staticmethod
     def from_dict(data):
         return Playlist(
@@ -43,17 +47,21 @@ class Playlist:
             data['image']
         )
 
+    # add song to playlist
     def add_song(self, song: Song):
         self.tracks.append(song)
         
+    # remove song from playlist
     def remove_song(self, song: Song):
         if song in set(self.tracks):
             self.tracks.remove(song)
     
+    # add state to playlist
     def add_state(self, state: State):
         self.states.append(state)
         
-    def display_info(self, command :int): # 
+    # debugging info
+    def display_info(self, command :int = 0): # 
         # 0 show all info 
         # 1 show just playlist name
         # 2 show songs
@@ -73,7 +81,7 @@ class Playlist:
             else: break
 
    
-
+# create new playlist object
 def make_new_playlist(token, playlist_id):
     info = get_playlist_info(token, playlist_id)
     tracks = get_playlist_tracks(token, playlist_id)
