@@ -124,8 +124,9 @@ def compare_playlists(current_user, new_user):
     new_playlist_ids = set(new_playlists.keys()) - set(current_playlists.keys())
     deleted_playlist_ids = set(current_playlists.keys()) - set(new_playlists.keys())
     
-    changes['new_playlists'] = [new_playlists[pid] for pid in new_playlist_ids]
-    changes['deleted_playlists'] = [current_playlists[pid] for pid in deleted_playlist_ids]
+    # Convert to Playlist objects before adding to changes
+    changes['new_playlists'] = [new_user.playlist_objects[pid] for pid in new_playlist_ids if pid in new_user.playlist_objects]
+    changes['deleted_playlists'] = [current_user.playlist_objects[pid] for pid in deleted_playlist_ids if pid in current_user.playlist_objects]
     
     # Check for modifications in existing playlists
     common_playlist_ids = set(current_playlists.keys()) & set(new_playlists.keys())
@@ -179,6 +180,9 @@ def apply_changes(user, changes):
     for playlist in changes['deleted_playlists']:
         print(f"Removing playlist: {playlist.id}")
         user.remove_playlist(playlist.id)
+        user.user_playlists = [p for p in user.user_playlists if p['id'] != playlist.id]
+
+        
     
     # Update modified playlists
     for change in changes['modified_playlists']:
