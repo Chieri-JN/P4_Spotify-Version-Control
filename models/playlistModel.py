@@ -88,8 +88,3 @@ def make_new_playlist(token, playlist_id):
 
     playlist = Playlist(info['name'], info['id'], new_tracks, [new_state], info['description'], info['images'][0]['url'])
     return playlist
-
-# cant do anything with this yet
-# def save_playlist_state(token, playlist_id, state_data):
-#     new_state = make_new_state(token, playlist_id, state_data['description'], 0, state_data['image'], state_data['name'], state_data['tracks'])
-#     return new_state 

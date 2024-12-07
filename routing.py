@@ -13,6 +13,7 @@ from models.stageModel import StagedChange
 from typing import *
 from database import init_db, save_user, get_user, save_staged_change, get_staged_change, clear_staged_change, save_pending_changes, get_pending_changes, clear_pending_changes
 import uuid
+import time
 
 # Initialize the database when the app starts
 init_db()
@@ -38,7 +39,7 @@ def index():
 # ----------------------- /login -------------------------
 @app.route("/login")
 def login():
-    scope = "playlist-modify-public playlist-modify-private playlist-read-private user-read-private user-read-email"
+    scope = "playlist-modify-public playlist-modify-private playlist-read-private user-read-private user-read-email ugc-image-upload"
     params = {
         'client_id': client_id,
         'response_type': 'code',
@@ -323,7 +324,8 @@ def restore_state(state_id, playlist_id):
         state_id=state_id,
         tracks=[track.to_dict() for track in state.tracks],
         name=state.name,
-        description=state.description
+        description=state.description,
+        image_url=state.image_url
     )
     
     # Save to database
@@ -336,7 +338,7 @@ def restore_state(state_id, playlist_id):
 
 
 # ----------------------- /clone_state -------------------------
-@app.route("/clone_state/<state_id>")
+@app.route("/clone_state/<state_id>/<playlist_id>")
 def clone_state(state_id, playlist_id):
     if 'access_token' not in session:
         return redirect('/login')
@@ -345,11 +347,39 @@ def clone_state(state_id, playlist_id):
         print("token expired, REFRESHING....")
         return redirect('/refresh_token')
     
-    if datetime.now().timestamp() > session['expires_at']:
-        print("token expired, REFRESHING....")
-        return redirect('/refresh_token')
-    # not implemented
-    # clone playlist state to new playlist
+    # Get user and playlist data
+    user = get_user(session['user_id'])
+    playlist = user.playlist_objects.get(playlist_id)
+    
+    if not playlist:
+        print(f"Playlist {playlist_id} not found")
+        return redirect('/playlists')
+    
+    # Find the state we want to clone
+    state = next((s for s in playlist.states if s.id == int(state_id)), None)
+    
+    if not state:
+        print(f"State {state_id} not found")
+        return redirect(f'/playlist_history/{playlist_id}')
+ 
+    # Create staged change
+    staged_change = StagedChange(
+        id=str(uuid.uuid4()),
+        type='clone',
+        playlist_id=playlist_id,
+        state_id=state_id,
+        tracks=[track.to_dict() for track in state.tracks],
+        name=state.name,
+        description=state.description,
+        image_url=state.image_url
+    )
+    
+    # Save to database
+    save_staged_change(session['user_id'], staged_change)
+    
+    # Store only the type in session
+    session['staged_type'] = 'clone'
+    
     return redirect('/push_changes')
 
 
@@ -421,7 +451,7 @@ def confirm_push_changes():
                 playlist_id=playlist.id,
                 description=staged_change.description,
                 id=len(playlist.states),
-                image_url=playlist.image,
+                image_url=staged_change.image_url,
                 playlist_name=staged_change.name,
                 tracks=playlist.tracks
             )
@@ -438,16 +468,99 @@ def confirm_push_changes():
             session.pop('staged_type', None)
             clear_staged_change(session['user_id'])
             
-            return redirect(url_for('playlists'))
+            return redirect('/playlists')
             
         except Exception as e:
             print(f"Error during playlist restore: {str(e)}")
             # If we hit an error, try to redirect to playlists
-            return redirect(url_for('playlists'))
+            return redirect('/playlists')
     
+    elif staged_change.type == 'clone': 
+        try:
+            if datetime.now().timestamp() > session['expires_at']:
+                print("token expired, REFRESHING....")
+                return redirect('/refresh_token')
+            print(f"Starting state clone for {staged_change.name}")
+
+            # Get track URIs from the state's tracks
+            track_uris = [f"spotify:track:{track['id']}" for track in staged_change.tracks]
+            print(f"Preparing to add {len(track_uris)} tracks")
+            
+            # Create new playlist
+            new_playlist = create_playlist(session['access_token'], staged_change.name + " Copy", staged_change.description)
+            if not new_playlist:
+                print("Failed to create new playlist")
+                return redirect('/playlists')
+            
+            print(f"Created new playlist with ID: {new_playlist['id']}")
+            print(f"Playlist URL: {new_playlist.get('external_urls', {}).get('spotify', 'No URL available')}")
+            
+            # Add tracks to the new playlist
+            if track_uris:
+                try:
+                    add_tracks_to_playlist(session['access_token'], new_playlist['id'], track_uris)
+                    print("Successfully added tracks to playlist")
+                    
+                    # Verify tracks were added
+                    headers = {'Authorization': f'Bearer {session["access_token"]}'}
+                    verify_url = f"https://api.spotify.com/v1/playlists/{new_playlist['id']}/tracks"
+                    verify_result = requests.get(verify_url, headers=headers)
+                    if verify_result.status_code == 200:
+                        track_count = verify_result.json().get('total', 0)
+                        print(f"Verified {track_count} tracks in playlist")
+                    else:
+                        print("Failed to verify tracks were added")
+                    
+                except Exception as e:
+                    print(f"Error adding tracks: {str(e)}")
+                    return redirect('/playlists')
+            
+            # Set playlist image only if playlist creation and track addition were successful
+            if staged_change.image_url:
+                # Check if token is expired
+                if datetime.now().timestamp() > session['expires_at']:
+                    print("Token expired, refreshing...")
+                    return redirect('/refresh_token')
+                
+                # Wait a short moment for the playlist to be fully created
+                time.sleep(1)
+                
+                # Try to set the image
+            
+            
+                image_success = set_playlist_image(session['access_token'], new_playlist['id'], staged_change.image_url)
+                if not image_success:
+                    print("Failed to set playlist image, but continuing with playlist creation")
+
+            # Create new playlist object    
+            new_playlist_obj = make_new_playlist(session['access_token'], new_playlist['id'])
+            
+            # Add new playlist to user's collections
+            user = get_user(session['user_id'])  # Get fresh user data
+            if user:
+                user.user_playlists.append(new_playlist_obj.to_dict())
+                user.playlist_objects[new_playlist_obj.id] = new_playlist_obj
+                save_user(user)
+                print("Saved changes to database")
+            
+            # Clear staged changes
+            session.pop('staged_type', None)
+            clear_staged_change(session['user_id'])
+            
+            return redirect('/playlists')
+
+        except Exception as e:
+            print(f"Error during playlist clone: {str(e)}")
+            # Add more detailed error logging
+            import traceback
+            print("Full error:", traceback.format_exc())
+            return redirect('/playlists')
+
+
+
     # If we get here, something went wrong
     print("No valid changes found to apply")
-    return redirect(url_for('playlists'))
+    return redirect('/playlists')
 
 # ----------------------- /cancel_push -------------------------
 @app.route("/cancel_push")
@@ -456,6 +569,7 @@ def cancel_push():
         return redirect('/playlists')
     return render_template('cancel_push.html')
 
+# ----------------------- /confirm_cancel_push -------------------------
 @app.route("/confirm_cancel_push")
 def confirm_cancel_push():
     session.pop('staged_type', None)
@@ -486,7 +600,7 @@ def refresh_token():
     previous_page = request.referrer or url_for('home')  # if no prev page, go to home
     return redirect(previous_page)
 
-
+# ----------------------- /playlist  -------------------------
 @app.route("/playlist/<playlist_id>")
 def playlist(playlist_id):
     if 'access_token' not in session:
@@ -508,15 +622,4 @@ def playlist(playlist_id):
     playlist.total_tracks = len(playlist.tracks)
     
     return render_template('playlist.html', playlist=playlist)
-
-@app.route("/create_playlist")
-def create_playlist():
-    if 'access_token' not in session:
-        return redirect('/login')
-    
-    if datetime.now().timestamp() > session['expires_at']:
-        print("token expired, REFRESHING....")
-        return redirect('/refresh_token')
-    # not implemented
-    return render_template('create_playlist.html')
 
