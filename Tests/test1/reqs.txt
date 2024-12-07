@@ -1,2 +1,0 @@
-sqlmodel=0.0.16
-spotipy=2.23.0
